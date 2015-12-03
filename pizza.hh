@@ -20,22 +20,27 @@ namespace {
     };
 }
 
-//Trzeba zmienić żeby mogły być kawałki różnych typów pizz.
-template <size_t N, typename T>
-struct Pizza {
-    template <typename Kind>
-    static constexpr size_t count() {
-        return std::is_same<T, Kind>::value ? N : 0;
-    }
-    typedef Pizza<static_cast<size_t>(N * 2), T> sliced_type;
-};
-
 
 template <typename... Kinds> struct Pizzeria {
 
+    //Sprawdza czy w menu nie ma powtarzających się pizz.
+    static_assert(!is_repetition<Kinds...>::value, ""); //coś na razie nie działa.
+
     template <typename Kind>
     struct make_pizza {
-        typedef Pizza<static_cast<size_t>(8), Kind> type;
+
+        //Sprawdza czy zadana pizza jest w menu.
+        static_assert(is_repetition<Kind, Kinds...>::value, "");
+
+        static constexpr size_t slices[1] = {8};
+
+        //Typ reprezentujący pizzę.
+        template <const size_t Slices[], typename... Mixed>
+        struct Pizza {
+        };
+
+        typedef Pizza<slices, Kind> type;
+
     };
 };
 
