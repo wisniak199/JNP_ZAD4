@@ -36,54 +36,63 @@ namespace {
 }
 
 
+
+//Struktura która zlicza poszczególne ilości kawałków.
+template <const size_t... I>
+struct Slices_counter {
+    static constexpr auto array = std::array<size_t, sizeof...(I)>{{I...}};
+    typedef Slices_counter<(I * 2)...> Sliced_slices_counter;
+};
+
 template <typename... Menu>
 struct Pizzeria {
 
     //Tyle kawałków początkowo jest w jedej pizzy.
-    //Tablica reprezentuje ilość różnych smaków, pola ilość kawałków danego rodzaju..
-    static constexpr size_t slices[1] = {8};
+    using DefaultSlices = Slices_counter<8>;
 
     //Typ reprezentujący pizzę.
-    //Tablica z ilościami kawałków, lista typów to rodzaje pizzy.
-    //na n-tym miejscu w tablicy jest ilość kawałków n-tego typu.
-    template <const size_t Slices[], typename... Types>
+    template <typename Counter, typename... Types>
     struct Pizza {
 
-        //Sprawdza czy pizza ma kawałki zadanego typu.
+        static constexpr auto slices_array = Counter::array;
+
+        //Sprawdza ile kawałków zadanego typu ma pizza.
         template <typename Type>
         static constexpr size_t count() {
             return is_repetition<Type, Types...>::value ?
-                Slices[next_repetition<0, Type, Types...>::value] : 0;
+                slices_array[next_repetition<0, Type, Types...>::value] : 0;
         }
+
+        typedef Pizza<typename Counter::Sliced_slices_counter, Types...> sliced_type;
 
         //Struktura pomocnicza to tworzenia tablicy rodzajów z menu.
         template <typename... Args>
         struct AsArray {
             template <typename... T>
-            static constexpr auto make_array(T... args)
-                ->decltype(std::array<size_t, sizeof...(T)>{args...}) {
-                return std::array<size_t, sizeof...(T)>{args...};
+            static constexpr auto make_array(T... args) {
+                return std::array<size_t, sizeof...(T)>{{args...}};
             }
         };
 
         template <typename Arg, typename... Args>
         struct AsArray<Arg, Args...> {
             template <typename... T>
-            static constexpr auto make_array(T...args)
-                -> decltype(AsArray<Args...>::make_array(args..., count<Arg>())) {
+            static constexpr auto make_array(T...args) {
                 return AsArray<Args...>::make_array(args..., count<Arg>());
             }
         };
 
-        //Zwraca tablicę rodzajów pizz z menu.
+        //Zwraca tablicę z ilościami kwałków poszczególnych rodzajów.
         static constexpr std::array<size_t, sizeof...(Menu)> as_array() {
                 return AsArray<Menu...>::make_array();
-        };
+        }
+
     };
 
+    //Struktura która tworzy pizzę.
     template <typename Kind>
     struct make_pizza {
-        typedef Pizza<slices, Kind> type;
+        typedef Pizza<DefaultSlices, Kind> type;
     };
 };
 
