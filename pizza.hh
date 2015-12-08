@@ -8,45 +8,11 @@
 
 
 namespace {
-
-
-/*  //Przyda się przy assercjach
-    //Sprawdza czy w liście typów są dwa takie które się powtarzają.
-    template <typename ...Args>
-    struct is_repetition {
-        static bool const value = false;
-    };
-
-    template <typename T, typename U, typename ...Args>
-    struct is_repetition<T, U, Args...> {
-        static bool const value = std::is_same<T, U>::value ||
-            is_repetition<T, Args...>::value || is_repetition<U, Args...>::value;
-    };*/
-
-    //Zwraca pozycję następnego wystąpienia pierwszego typu w liście typów,
-    //liczoną od I. Gdy nie ma następnego wystąpienia zwraca -1.
-    //np. dla <0, char, int, char> zwraca 1.
-    //  szukany_typ^    0^    1^
-    template <unsigned int I, typename ...Args>
-    struct next_repetition {
-        static int const value = -1;
-    };
-
-    template <unsigned int I, typename T, typename U, typename ...Args>
-    struct next_repetition<I, T, U, Args...> {
-        static int const value = std::is_same<T, U>::value ? I
-            : next_repetition<I + 1, T, Args...>::value;
-    };
-
     template<typename Kind> 
     constexpr size_t best_yumminess(const size_t max_slices, const int best_yum, const size_t best_i, const size_t i) {
         return i == max_slices + 1 ? best_i : 
             best_yumminess<Kind>(max_slices, std::max(best_yum, Kind::yumminess(i)), Kind::yumminess(i) > best_yum ? i : best_i, i + 1);
     }
-}
-
-template <typename... Kinds>
-struct Pizzeria {
 
     //sprawdza czy Pizzeria jest wlasciwa
     template <typename... Ts>
@@ -58,6 +24,10 @@ struct Pizzeria {
     struct Repetition<T, Ts...> {
         static constexpr bool value = Repetition<Ts...>::value || (std::is_same<T, Ts>::value ||...);
     };
+}
+
+template <typename... Kinds>
+struct Pizzeria {
 
     static_assert(!Repetition<Kinds...>::value, "Indecisive pizzeria");
 
@@ -70,7 +40,7 @@ struct Pizzeria {
 
         template <typename K>
         static constexpr size_t count() {
-            return std::get<next_repetition<0, K, Kinds...>::value>(std::array<size_t, sizeof...(Slices)>{{Slices...}});
+            return ((std::is_same<K, Kinds>::value * Slices)+...);
         }
 
         //najlepszy mix danej pizzy z Pizza2
