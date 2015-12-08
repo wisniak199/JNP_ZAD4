@@ -88,25 +88,7 @@ struct Pizzeria {
     struct make_pizza {
 
         static_assert((std::is_same<Kind, Kinds>::value ||...), "This pizza is not available in this pizzeria");
-        //Nazwy do zmiany...
-        //Struktury pomocnicze do konstruowania typu Pizza zadanego rodzaju.
-        template <typename... Types>
-        struct Foo{
-            template <size_t... I>
-            struct Bar{
-                typedef Pizzeria<Kinds...>::Pizza<I...> pizza;
-            };
-        };
-
-        template <typename T, typename... Types>
-        struct Foo<T, Types...> {
-            template <size_t... I>
-            struct Bar {
-                typedef typename Foo<Types...>::template Bar<I..., std::is_same<Kind, T>::value ? 8 : 0>::pizza pizza;
-            };
-        };
-
-        typedef typename Foo<Kinds...>::template Bar<>::pizza type;
+        typedef Pizza<(std::is_same<Kind, Kinds>::value ? 8 : 0)...> type;
 
     };
 };
