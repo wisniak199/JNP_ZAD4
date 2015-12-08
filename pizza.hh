@@ -37,9 +37,13 @@ namespace {
         static int const value = std::is_same<T, U>::value ? I
             : next_repetition<I + 1, T, Args...>::value;
     };
+
+    template<typename Kind> 
+    constexpr size_t best_yumminess(const size_t max_slices, const int best_yum, const size_t best_i, const size_t i) {
+        return i == max_slices + 1 ? best_i : 
+            best_yumminess<Kind>(max_slices, std::max(best_yum, Kind::yumminess(i)), Kind::yumminess(i) > best_yum ? i : best_i, i + 1);
+    }
 }
-
-
 
 template <typename... Kinds>
 struct Pizzeria {
@@ -55,7 +59,13 @@ struct Pizzeria {
             return std::get<next_repetition<0, K, Kinds...>::value>(std::array<size_t, sizeof...(Slices)>{{Slices...}});
         }
 
+        template <typename Pizza2>
+        struct Mix {
+            typedef Pizza<best_yumminess<Kinds>(count<Kinds>() + Pizza2::template count<Kinds>(), 0, 0, 0)...> type;
+        };
+
         typedef Pizzeria<Kinds...>::Pizza<(2 * Slices)...> sliced_type;
+        typedef Pizzeria<Kinds...> my_pizzeria;
     };
 
     //Struktura która tworzy pizzę.
@@ -85,4 +95,9 @@ struct Pizzeria {
     };
 };
 
+template <typename Pizza1, typename Pizza2>
+struct best_mix {
+    static_assert(std::is_same<typename Pizza1::my_pizzeria, typename Pizza2::my_pizzeria>::value);
+    typedef typename Pizza1::template Mix<Pizza2>::type type;
+};
 #endif
