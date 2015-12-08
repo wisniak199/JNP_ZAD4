@@ -48,6 +48,20 @@ namespace {
 template <typename... Kinds>
 struct Pizzeria {
 
+    //sprawdza czy Pizzeria jest wlasciwa
+    template <typename... Ts>
+    struct Repetition {
+        static constexpr bool value = false;
+    };
+
+    template <typename T, typename... Ts>
+    struct Repetition<T, Ts...> {
+        static constexpr bool value = Repetition<Ts...>::value || (std::is_same<T, Ts>::value ||...);
+    };
+
+    static_assert(!Repetition<Kinds...>::value, "Indecisive pizzeria");
+
+
     template <const size_t... Slices>
     struct Pizza {
         static constexpr auto as_array() {
@@ -59,6 +73,7 @@ struct Pizzeria {
             return std::get<next_repetition<0, K, Kinds...>::value>(std::array<size_t, sizeof...(Slices)>{{Slices...}});
         }
 
+        //najlepszy mix danej pizzy z Pizza2
         template <typename Pizza2>
         struct Mix {
             typedef Pizza<best_yumminess<Kinds>(count<Kinds>() + Pizza2::template count<Kinds>(), 0, 0, 0)...> type;
@@ -72,6 +87,7 @@ struct Pizzeria {
     template <typename Kind>
     struct make_pizza {
 
+        static_assert((std::is_same<Kind, Kinds>::value ||...), "This pizza is not available in this pizzeria");
         //Nazwy do zmiany...
         //Struktury pomocnicze do konstruowania typu Pizza zadanego rodzaju.
         template <typename... Types>
@@ -97,7 +113,8 @@ struct Pizzeria {
 
 template <typename Pizza1, typename Pizza2>
 struct best_mix {
-    static_assert(std::is_same<typename Pizza1::my_pizzeria, typename Pizza2::my_pizzeria>::value);
+    static_assert(std::is_same<typename Pizza1::my_pizzeria, typename Pizza2::my_pizzeria>::value, 
+            "Pizzas have to be from the same pizzeria");
     typedef typename Pizza1::template Mix<Pizza2>::type type;
 };
 #endif
