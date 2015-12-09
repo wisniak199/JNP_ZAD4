@@ -21,11 +21,18 @@ namespace {
 
     //Oblicza najlepszą smakowitość pizzy dla zadanej liczby kawałków.
     template<typename Kind>
-    constexpr size_t best_yumminess(const size_t max_slices, const int best_yum,
-                                    const size_t best_i, const size_t i) {
-        return i == max_slices + 1 ? best_i : best_yumminess<Kind>
-                    (max_slices, std::max(best_yum, Kind::yumminess(i)),
-                    Kind::yumminess(i) > best_yum ? i : best_i, i + 1);
+    constexpr size_t best_yumminess(const size_t max_slices) {
+        static_assert(Kind::yumminess(0) == 0, "Pizza's function yumminess(0) have to return 0");
+        auto best_yum = Kind::yumminess(0);
+        size_t best_i = 0;
+        for(size_t i = 1; i <= max_slices; ++i) {
+            auto new_yum = Kind::yumminess(i);
+            if (new_yum > best_yum) {
+                best_i = i;
+                best_yum = new_yum;
+            }
+        }
+        return best_i;
     }
 }
 
@@ -58,7 +65,7 @@ struct Pizzeria {
                 template <typename Pizza2>
                 struct Mix {
                     typedef Pizza<best_yumminess<Kinds>(count<Kinds>()
-                        + Pizza2::template count<Kinds>(), 0, 0, 0)...> type;
+                        + Pizza2::template count<Kinds>())...> type;
                 };
 
                 typedef Pizzeria<Kinds...> my_pizzeria;
